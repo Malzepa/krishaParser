@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const listingSchema = new mongoose.Schema({
+const houseInfoSchema = new mongoose.Schema({
   id: String,
   title: String,
   price: Number,
@@ -12,6 +12,6 @@ const listingSchema = new mongoose.Schema({
   totalFloors: Number,
 });
 
-const Listing = mongoose.model("Listing", listingSchema);
+const HouseInfo = mongoose.model("HouseInfo", houseInfoSchema);
 
-export default Listing;
+export default HouseInfo;

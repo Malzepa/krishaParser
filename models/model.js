@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var mongoose_1 = require("mongoose");
-var listingSchema = new mongoose_1.default.Schema({
+var houseInfoSchema = new mongoose_1.default.Schema({
     id: String,
     title: String,
     price: Number,
@@ -12,5 +12,5 @@ var listingSchema = new mongoose_1.default.Schema({
     floor: Number,
     totalFloors: Number,
 });
-var Listing = mongoose_1.default.model("Listing", listingSchema);
-exports.default = Listing;
+var HouseInfo = mongoose_1.default.model("HouseInfo", houseInfoSchema);
+exports.default = HouseInfo;

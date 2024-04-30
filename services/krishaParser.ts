@@ -1,7 +1,7 @@
 import axios from "axios";
 import cheerio from "cheerio";
 import mongoose from "mongoose";
-import Listing from "../models/model";
+import HouseInfo from "../models/model";
 
 async function connectToDatabase() {
   try {
@@ -13,12 +13,12 @@ async function connectToDatabase() {
   }
 }
 
-export async function parseListing(url: string) {
+export async function parseHouseInfo(url: string) {
   const urlPattern = /^https:\/\/krisha\.kz\/a\/show\/\d+$/;
 
   if (!urlPattern.test(url)) {
     console.error(
-      "Invalid URL format. Please provide a valid krisha.kz listing URL."
+      "Invalid URL format. Please provide a valid krisha.kz house info URL."
     );
     return;
   }
@@ -29,33 +29,55 @@ export async function parseListing(url: string) {
     const $ = cheerio.load(html);
 
     const id = url.split("/").pop();
-    const title = $(".offer__advert-title h1").text().trim();
-    const price = parseInt($(".offer__price").text().trim().replace(/\D/g, ""));
-    const buildingType = $(
+
+    const titleElement = $(".offer__advert-title h1");
+    const title =
+      titleElement.length > 0 ? titleElement.text().trim() : "Unknown Title";
+
+    const priceString = $(".offer__price").text().trim().replace(/\D/g, "");
+    const price = parseInt(priceString) || 0;
+
+    const buildingTypeElement = $(
       "div[data-name='flat.building'] .offer__advert-short-info"
+    );
+    const buildingType =
+      buildingTypeElement.length > 0
+        ? buildingTypeElement.text().trim()
+        : "Unknown Building type";
+
+    const yearBuildString = $(
+      "div[data-name='house.year'] .offer__advert-short-info"
     )
       .text()
       .trim();
-    const yearBuilt = parseInt(
-      $("div[data-name='house.year'] .offer__advert-short-info").text().trim()
-    );
-    const area = parseInt(
-      $("div[data-name='live.square'] .offer__advert-short-info")
-        .text()
-        .trim()
-        .replace(/\D/g, "")
-    );
-    const bathroom = $("div[data-name='flat.toilet'] .offer__advert-short-info")
+    const yearBuilt = parseInt(yearBuildString) || 0;
+
+    const areaString = $(
+      "div[data-name='live.square'] .offer__advert-short-info"
+    )
       .text()
-      .trim();
-    const floorInfo = $(
+      .trim()
+      .replace(/[^\d.]/g, "");
+    const area = parseFloat(areaString) || 0;
+
+    const bathroomElement = $(
+      "div[data-name='flat.toilet'] .offer__advert-short-info"
+    );
+    const bathroom =
+      bathroomElement.length > 0
+        ? bathroomElement.text().trim()
+        : "Unknown Bathroom";
+
+    const floorInfoString = $(
       '.offer__info-item[data-name="flat.floor"] .offer__advert-short-info'
     )
       .text()
       .trim();
-    const [floor, totalFloors] = floorInfo.split(" из ");
+    const [floorString, totalFloorsString] = floorInfoString.split(" из ");
+    const floor = parseInt(floorString) || 0;
+    const totalFloors = parseInt(totalFloorsString) || 0;
 
-    const listing = new Listing({
+    const houseInfo = new HouseInfo({
       id,
       title,
       price,
@@ -67,16 +89,12 @@ export async function parseListing(url: string) {
       totalFloors,
     });
 
-    await listing.save();
+    await houseInfo.save();
 
-    console.log("Listing saved:", listing);
+    console.log("House info saved:", houseInfo);
   } catch (error) {
-    console.error("Error parsing listing:", error);
+    console.error("Error parsing house info:", error);
   }
 }
-
-// export async function parseKrishaAd(url: string): Promise<void> {
-//   const response = await axios.get(url);
-//   const $ = cheerio.load(response.data);
 
 connectToDatabase();

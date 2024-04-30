@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseListing = void 0;
+exports.parseHouseInfo = void 0;
 var axios_1 = require("axios");
 var cheerio_1 = require("cheerio");
 var mongoose_1 = require("mongoose");
@@ -62,15 +62,15 @@ function connectToDatabase() {
         });
     });
 }
-function parseListing(url) {
+function parseHouseInfo(url) {
     return __awaiter(this, void 0, void 0, function () {
-        var urlPattern, response, html, $, id, title, price, buildingType, yearBuilt, area, bathroom, floorInfo, _a, floor, totalFloors, listing, error_2;
+        var urlPattern, response, html, $, id, titleElement, title, priceString, price, buildingTypeElement, buildingType, yearBuildString, yearBuilt, areaString, area, bathroomElement, bathroom, floorInfoString, _a, floorString, totalFloorsString, floor, totalFloors, houseInfo, error_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     urlPattern = /^https:\/\/krisha\.kz\/a\/show\/\d+$/;
                     if (!urlPattern.test(url)) {
-                        console.error("Invalid URL format. Please provide a valid krisha.kz listing URL.");
+                        console.error("Invalid URL format. Please provide a valid krisha.kz house info URL.");
                         return [2 /*return*/];
                     }
                     _b.label = 1;
@@ -82,24 +82,34 @@ function parseListing(url) {
                     html = response.data;
                     $ = cheerio_1.default.load(html);
                     id = url.split("/").pop();
-                    title = $(".offer__advert-title h1").text().trim();
-                    price = parseInt($(".offer__price").text().trim().replace(/\D/g, ""));
-                    buildingType = $("div[data-name='flat.building'] .offer__advert-short-info")
+                    titleElement = $(".offer__advert-title h1");
+                    title = titleElement.length > 0 ? titleElement.text().trim() : "Unknown Title";
+                    priceString = $(".offer__price").text().trim().replace(/\D/g, "");
+                    price = parseInt(priceString) || 0;
+                    buildingTypeElement = $("div[data-name='flat.building'] .offer__advert-short-info");
+                    buildingType = buildingTypeElement.length > 0
+                        ? buildingTypeElement.text().trim()
+                        : "Unknown Building type";
+                    yearBuildString = $("div[data-name='house.year'] .offer__advert-short-info")
                         .text()
                         .trim();
-                    yearBuilt = parseInt($("div[data-name='house.year'] .offer__advert-short-info").text().trim());
-                    area = parseInt($("div[data-name='live.square'] .offer__advert-short-info")
+                    yearBuilt = parseInt(yearBuildString) || 0;
+                    areaString = $("div[data-name='live.square'] .offer__advert-short-info")
                         .text()
                         .trim()
-                        .replace(/\D/g, ""));
-                    bathroom = $("div[data-name='flat.toilet'] .offer__advert-short-info")
+                        .replace(/[^\d.]/g, "");
+                    area = parseFloat(areaString) || 0;
+                    bathroomElement = $("div[data-name='flat.toilet'] .offer__advert-short-info");
+                    bathroom = bathroomElement.length > 0
+                        ? bathroomElement.text().trim()
+                        : "Unknown Bathroom";
+                    floorInfoString = $('.offer__info-item[data-name="flat.floor"] .offer__advert-short-info')
                         .text()
                         .trim();
-                    floorInfo = $('.offer__info-item[data-name="flat.floor"] .offer__advert-short-info')
-                        .text()
-                        .trim();
-                    _a = floorInfo.split(" из "), floor = _a[0], totalFloors = _a[1];
-                    listing = new model_1.default({
+                    _a = floorInfoString.split(" из "), floorString = _a[0], totalFloorsString = _a[1];
+                    floor = parseInt(floorString) || 0;
+                    totalFloors = parseInt(totalFloorsString) || 0;
+                    houseInfo = new model_1.default({
                         id: id,
                         title: title,
                         price: price,
@@ -110,22 +120,19 @@ function parseListing(url) {
                         floor: floor,
                         totalFloors: totalFloors,
                     });
-                    return [4 /*yield*/, listing.save()];
+                    return [4 /*yield*/, houseInfo.save()];
                 case 3:
                     _b.sent();
-                    console.log("Listing saved:", listing);
+                    console.log("House info saved:", houseInfo);
                     return [3 /*break*/, 5];
                 case 4:
                     error_2 = _b.sent();
-                    console.error("Error parsing listing:", error_2);
+                    console.error("Error parsing house info:", error_2);
                     return [3 /*break*/, 5];
                 case 5: return [2 /*return*/];
             }
         });
     });
 }
-exports.parseListing = parseListing;
-// export async function parseKrishaAd(url: string): Promise<void> {
-//   const response = await axios.get(url);
-//   const $ = cheerio.load(response.data);
+exports.parseHouseInfo = parseHouseInfo;
 connectToDatabase();
