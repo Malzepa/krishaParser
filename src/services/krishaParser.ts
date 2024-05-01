@@ -13,8 +13,6 @@ async function connectToDatabase() {
   }
 }
 
-//haha
-
 export async function parseHouseInfo(url: string) {
   const urlPattern = /^https:\/\/krisha\.kz\/a\/show\/\d+$/;
 
